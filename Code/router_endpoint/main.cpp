@@ -1,5 +1,4 @@
-#include "mbed.h"
-#define UINT12_MAX 				4096
+#include "XbeeCommands.h"
 
 DigitalIn cs(p20);
 DigitalOut led(LED1);
@@ -49,6 +48,46 @@ void requestNetworkAcces()
 	
 }
 
+//char createFrame(char *data, unsigned int size, char frameType, char frameID, char *commands)
+void createFrame(char* data)
+{
+	char checksum = 0;
+	
+	char frame[64] = "";
+	
+	frame[0] = 0x7E;					//Start frame char
+	frame[1] = 0x00;					//MSB of length is always 0.
+	frame[2] = 0x04; 	//The lenght of data that we are given.
+	frame[3] = AT_CMD;				//FrameType
+	frame[4] = 0x52;					//frame ID.
+	frame[5] = 'I';
+	frame[6] = 'D';
+	
+	for(int i = 3; i < 7; i++)
+		checksum += frame[i];
+	checksum = 0xFF - checksum;
+	
+	frame[7] = checksum;
+	
+	for(int i = 0; i<7; i++)
+	{
+		*data = frame[i];
+		data++;
+	}
+	//frame[5] = ((char)AT_CMD_ID & 0xFF00) >> 2; 
+	//frame[6] = (char)AT_CMD_ID & 0x00FF;
+	
+}
+
+void sendFrame(char *frame)
+{
+	xbee.printf(frame);
+	while(xbee.readable())
+	{
+		pc.printf("%X",xbee.getc());
+	}
+}
+
 int main ()
 {
 	char cmd[2] = {0x2A, 0x03};
@@ -62,11 +101,11 @@ int main ()
 			led = 0;
 		
 		int acc = getAccReading();
-		//pc.printf("%d\r",acc);
-		
-		char buffer[64];
-		
-		xbee.printf("%s",buffer);
-		wait(0.01);
+		char data[64] = "";
+		createFrame(data);
+		for(int i =0;i<10;i++)
+			pc.printf("%02X",data[i]);
+		pc.printf("\r");
+		sendFrame(data);
 	}
 }

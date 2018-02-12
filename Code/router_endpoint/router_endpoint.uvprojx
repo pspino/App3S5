@@ -1335,6 +1335,11 @@
               <FileType>5</FileType>
               <FilePath>mbed_config.h</FilePath>
             </File>
+            <File>
+              <FileName>XbeeCommands.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\XbeeCommands.h</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

@@ -1,5 +1,6 @@
 .\build\main.o: main.cpp
 .\build\main.o: mbed_config.h
+.\build\main.o: XbeeCommands.h
 .\build\main.o: mbed/./mbed.h
 .\build\main.o: mbed/./platform/toolchain.h
 .\build\main.o: mbed/./platform/mbed_preprocessor.h

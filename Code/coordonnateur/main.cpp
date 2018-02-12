@@ -1,20 +1,19 @@
-#include "mbed.h"
-#include "EthernetInterface.h"
+#include "XbeeCommands.h"
 
 Serial xbee(p28,p27);
 Serial pc(USBTX,USBRX);
 
-
+LocalFileSystem local("local");
 
 DigitalOut rst(p26);
 
+void (*func_pointer[5])();
+
 typedef struct
 {
-	char *key;
-	char *value;
+	char key[10];
+	char value[20];
 }config_t;
-
-void (*func_pointer[5])();
 
 enum xbeeFrames
 {
@@ -32,6 +31,35 @@ void configMode()
 	while(data != 75)
 		if(xbee.readable())
 			data = xbee.getc();
+}
+
+void createFrame(char* data)
+{
+	char checksum = 0;
+	
+	char frame[64] = "";
+	
+	frame[0] = 0x7E;					//Start frame char
+	frame[1] = 0x00;					//MSB of length is always 0.
+	frame[2] = 0x04; 					//The lenght of data that we are given.
+	frame[3] = AT_CMD;				//FrameType
+	frame[4] = 0x52;					//frame ID.
+	frame[5] = 'I';
+	frame[6] = 'D';
+	
+	for(int i = 3; i < 7; i++)
+		checksum += frame[i];
+	checksum = 0xFF - checksum;
+	
+	frame[7] = checksum;
+	
+	for(int i = 0; i<7; i++)
+	{
+		*data = frame[i];
+		data++;
+	}
+	//frame[5] = ((char)AT_CMD_ID & 0xFF00) >> 2; 
+	//frame[6] = (char)AT_CMD_ID & 0x00FF;
 }
 
 void setPANId()
@@ -59,12 +87,12 @@ void readXbee(char *data, int length)
 	}
 }
 
-bool readConfigFile(char *keys, char* values)
+bool readConfigFile(char *PANID, char* URL)
 {
-	FILE *config = fopen("/local/.config","r");
+	FILE *config = fopen("/local/config.txt","r");
 	if(config == NULL)
 	{
-		error("no config file were found");
+		pc.printf("no config file were found\n");
 		return false;
 	}
 	
@@ -82,9 +110,9 @@ bool readConfigFile(char *keys, char* values)
 		char *sp = strchr(buffer,';');
 		if(sp != NULL)
 		{
-			strcpy(values,sp + 1);
+			strcpy(URL,sp + 1);	
 			*sp = '\0';
-			strcpy(keys, buffer);
+			strcpy(PANID,buffer);	
 		}
 	}
 	fclose(config);
@@ -94,22 +122,10 @@ bool readConfigFile(char *keys, char* values)
 int main()
 {
 	//Reading config file content
-	char keys[64];
-	char values[128];
-	config_t config;
-	
-	if(readConfigFile(keys,values))
-	{
-		config.key = keys;
-		config.value = values;
-	}
-	else
-	{
-		//need to cancel the main since there is no config file and thus the PAN cannot work.
-		return 1;
-	}
-	
-	
+	char PANID[10];
+	char URL[20];
+	readConfigFile(PANID,URL);
+	pc.printf("PANID = %s\nURL = %s",PANID,URL);
 	
 	//Reseting Xbee to allow reset of the PAN.
 	rst = 0;
@@ -130,6 +146,5 @@ int main()
 			readXbee(readData,sizeof(readData));
 			pc.printf("%s",readData);
 		}
-		if()
 	}
 }

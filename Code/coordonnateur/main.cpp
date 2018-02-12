@@ -1,4 +1,6 @@
 #include "XbeeCommands.h"
+#include "EthernetInterface.h"
+#include "Websocket.h"
 
 Serial xbee(p28,p27);
 Serial pc(USBTX,USBRX);
@@ -144,7 +146,7 @@ int main()
 		if(xbee.readable())
 		{
 			readXbee(readData,sizeof(readData));
-			pc.printf("%s",readData);
+			//pc.printf("%s",readData);
 		}
 	}
 }

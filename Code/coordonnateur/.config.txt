@@ -1,4 +1,0 @@
-#CONFIG_HEADER_
-
-PANID; 0x1234;
-URL; https://9090:helloworld;
